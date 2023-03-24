@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+void main() => server().start();
+
 class server {
   List<WebSocket> lClientes = [];
 
   Future<void> start() async {
-    final server = await HttpServer.bind('localhost', 6666);
+    final server = await HttpServer.bind(InternetAddress.anyIPv4, 6666);
     print('Server iniciado en ${server.address}:${server.port}');
 
     await for (var request in server) {
@@ -17,7 +19,7 @@ class server {
 
           webSocket.listen(
             (data) {
-              final message = utf8.decode(data).trim();
+              final message = data;
               print(
                   'El cliente (${request.connectionInfo!.remoteAddress.address}:${request.connectionInfo!.remotePort}) ha enviado el siguiente mensaje: $message');
               _broadcast('$message\n', webSocket);
