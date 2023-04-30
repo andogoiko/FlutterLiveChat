@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'classes/message.dart';
+
 void main() => server().start();
 
 class server {
@@ -19,10 +21,11 @@ class server {
 
           webSocket.listen(
             (data) {
-              final message = data;
+              final Map<String, dynamic> json = jsonDecode(data);
+              final Message message = Message.fromJson(json);
               print(
-                  'El cliente (${request.connectionInfo!.remoteAddress.address}:${request.connectionInfo!.remotePort}) ha enviado el siguiente mensaje: $message');
-              _broadcast('$message\n', webSocket);
+                  'El cliente (${request.connectionInfo!.remoteAddress.address}:${request.connectionInfo!.remotePort}) ha enviado el siguiente mensaje: ${message.mensaje}');
+              _broadcast(message, webSocket);
             },
             onDone: () {
               print(
@@ -43,11 +46,11 @@ class server {
     }
   }
 
-  void _broadcast(String message, [WebSocket? exclude]) {
+  void _broadcast(Message message, [WebSocket? exclude]) {
     for (var client in lClientes) {
-      if (client != exclude) {
-        client.add(utf8.encode(message));
-      }
+      //if (client != exclude) { // quitanto esto le mandamos a todos el mensaje, al que lo envió incluído, dejamos esto para futuras confirmaciones de mensaje enviado
+      client.add(jsonEncode(message.toJson()));
+      //}
     }
   }
 }
