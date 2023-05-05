@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 import 'classes/message.dart';
+import 'package:intl/intl.dart';
 
 void main() => runApp(ChatApp());
 
@@ -27,6 +28,7 @@ class _ChatAppState extends State<ChatApp> {
   Widget build(BuildContext context) {
     if (_username.isEmpty) {
       return MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Set username',
         home: Scaffold(
           appBar: AppBar(
@@ -41,8 +43,8 @@ class _ChatAppState extends State<ChatApp> {
                   child: TextField(
                     textAlign: TextAlign.center,
                     controller: widget._textController,
-                    decoration:
-                        InputDecoration.collapsed(hintText: 'Escoge tu nombre de usuario'),
+                    decoration: InputDecoration.collapsed(
+                        hintText: 'Escoge tu nombre de usuario'),
                   ),
                 ),
                 ElevatedButton(
@@ -65,6 +67,7 @@ class _ChatAppState extends State<ChatApp> {
     }
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Chat Window',
       home: ChatWindow(username: _username),
     );
@@ -91,7 +94,7 @@ class _ChatWindowState extends State<ChatWindow> {
   void _sendMessage() {
     if (widget._textController.text.isNotEmpty) {
       final message =
-          Message(widget._textController.text, 'John', DateTime.now());
+          Message(widget._textController.text, widget.username, DateTime.now());
       Map<String, dynamic> data = message.toJson();
       widget._channel.sink.add(jsonEncode(data));
       widget._textController.clear();
@@ -101,6 +104,10 @@ class _ChatWindowState extends State<ChatWindow> {
   @override
   void initState() {
     super.initState();
+    final message =
+          Message(widget.username + " Se ha conectado", "Sistema", DateTime.now());
+      Map<String, dynamic> data = message.toJson();
+      widget._channel.sink.add(jsonEncode(data));
 
     widget._channel.stream.listen(
       (data) {
@@ -134,21 +141,73 @@ class _ChatWindowState extends State<ChatWindow> {
         title: Text('Mensajería Palomino'),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Flexible(
+        children: [
+          Expanded(
             child: ListView.builder(
               itemCount: widget._messages.length,
               itemBuilder: (BuildContext context, int index) {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(widget.username + ": " + widget._messages[index].mensaje),
+                  child: Row(
+                    children: [
+                      UnconstrainedBox(
+                        child: Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: index % 2 == 0
+                                ? Color.fromARGB(255, 255, 194, 214)
+                                : Color.fromARGB(255, 182, 182, 182),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 100,
+                            maxWidth: MediaQuery.of(context).size.width - 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+
+                              Text(
+                                widget._messages[index].usuario,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                widget._messages[index].mensaje,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    DateFormat('HH:mm')
+                                        .format(widget._messages[index].fecha)
+                                        .toString(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
           ),
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(4),
             child: Row(
               children: <Widget>[
                 Flexible(
